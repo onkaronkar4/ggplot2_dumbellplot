@@ -1,0 +1,57 @@
+---
+title: "dumbell_albertrapp"
+format: html
+editor: visual
+---
+
+```{r}
+library(tidyverse)
+set.seed(345004)
+selected_countries <- gapminder::gapminder |> 
+  janitor::clean_names() |> 
+  filter(
+    year %in% c(1952, 2007),
+    country %in% c(sample(levels(gapminder::gapminder$country), 25), 'Zimbabwe')
+  ) |> 
+  mutate(year = factor(year)) |> 
+  select(country, year, life_exp)
+```
+
+
+```{r}
+library(tidyverse)
+sorted_countries <- selected_countries |> 
+  arrange(country, year) |> 
+  mutate(
+    change_life_exp = diff(life_exp), 
+    order_dumbbells = if_else(change_life_exp < 0, -1, 1) * life_exp[2],
+    .by = country
+  ) |> 
+  mutate(country = fct_reorder(country, order_dumbbells))
+sorted_countries |> 
+  ggplot(aes(x = life_exp, y = country)) +
+  geom_path(
+    aes(color = (change_life_exp < 0)),
+    linewidth = 1,
+    arrow = arrow(length = unit(0.3, 'cm'), type = 'closed')
+  ) +
+  # geom_point(
+  #   aes(fill = year), 
+  #   shape = 21, 
+  #   size = 5, 
+  #   color = '#333333', 
+  #   stroke = 1
+  # ) +
+  theme_minimal(base_size = 16, base_family = 'Source Sans Pro') +
+  labs(
+    title = 'Zimbabwe Actually Decreased Its Life Expectancy in the Last 55 Years',
+    x = 'Life expectancy (in years)', 
+    y = element_blank(),
+    fill = 'Year'
+  ) +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    legend.position = 'none'
+  )
+```
